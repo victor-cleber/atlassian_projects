@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  confluence_db:
+      image: postgres:11
+      container_name: server_to_cloud_db
+      restart: always
+      environment:
+        - POSTGRES_USER=postgres
+        - POSTGRES_PASSWORD=#Ch@ng3_1t
+        - POSTGRES_DB=confluence
+        - POSTGRES_ENCODING=UNICODE
+        - PG_DATA=/var/lib/postgres/data
+      volumes:
+        - conf_db:/var/lib/postgresql
+      networks:
+        confnetwork:
+          ipv4_address: 10.0.0.4
+      ports:
+        - '5432:5432'
+      
+  confluence:
+      depends_on: 
+        - confluence_db
+      image: atlassian/confluence-server
+      restart: always
+      container_name: server_to_cloud_confluence
+      volumes:
+          - conf_home:/var/atlassian/application-data/confluence/
+      networks:
+          confnetwork:
+            ipv4_address: 10.0.0.5
+      ports:
+        - '8090:8090'
+        - '8091:8091'
+      environment:
+        - ATL_JDBC_URL=jdbc:postgresql://10.0.0.4:5432/confluence
+        - ATL_JDBC_USER=postgres
+        - ATL_JDBC_PASSWORD=#Ch@ng3_1t
+        - ATL_DB_TYPE=postgresql
+        - ATL_DB_DRIVER=org.postgresql.Driver
+        - ATL_DB_SCHEMA_NAME=public
+volumes:
+    conf_db: {}
+    conf_home: {}
+
+networks:
+    confnetwork:
+      driver: bridge
+      ipam:
+        config:
+          - subnet: 10.0.0.0/24
